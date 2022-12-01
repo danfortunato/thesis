@@ -1,0 +1,582 @@
+% Document info %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\newcommand{\myTitle}{Fast solvers for elliptic partial differential equations \\ based on spectral and high-order methods}
+\newcommand{\myTitle}{Fast Solvers for Elliptic Partial Differential Equations \\ Based on Spectral and High-Order Methods}
+\newcommand{\myName}{Daniel Frank Fortunato}
+\newcommand{\myDepartment}{School of Engineering and Applied Sciences}
+\newcommand{\myUni}{Harvard University}
+\newcommand{\myTime}{2020}
+
+% Layout %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[%
+    % drafting,%
+    % minionpro,%
+    % minionprospacing,%
+    % eulerchapternumbers,%
+    % pdfspacing,%
+    % beramono,%
+    % subfig,%
+    % eulermath,%
+    % listings,%
+%    palatino=off,
+	dottedtoc,%
+    floatperchapter,%
+%    parts,
+%    linedheaders
+]{classicthesis}
+\usepackage{newpxtext}
+\renewcommand{\oldstylenums}[1]{{\fontfamily{pplj}\selectfont #1}}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\geometry{%
+	left=3cm,
+	right=3cm,
+	top=2.5cm,
+	bottom=2.5cm,
+	paperwidth=8.5in,
+	paperheight=11in,
+%    bindingoffset=0.89cm,%
+%    inner=2cm,%
+%    outer=4cm,%
+    marginparsep=0.6cm,%
+    marginparwidth=3cm%
+}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{enumitem}
+\usepackage{pdfpages}
+\usepackage[normalem]{ulem}
+\usepackage{quoting}
+%\usepackage{chngcntr}
+\usepackage{xspace}
+\usepackage{varwidth}
+%\usepackage{fancyhdr}
+\usepackage[title,titletoc]{appendix}
+\usepackage{setspace}
+\usepackage{lipsum}
+\usepackage{etoolbox}
+%\AtBeginEnvironment{quote}{\itshape}
+\newcounter{savefootnote} % Save footnote counter
+\usepackage{todonotes}
+
+%% Try to keep footnotes on one page.
+\interfootnotelinepenalty=10000
+
+% Revision color
+\colorlet{rev}{red}
+\newcommand{\rev}[1]{\textcolor{rev}{#1}}
+
+%% Add support for color in order to color the hyperlinks.
+%\colorlet{exlinkcolor}{red!50!black}
+\colorlet{exlinkcolor}{green!50!black}
+%\AtBeginDocument{
+%\hypersetup{
+%	colorlinks=false,
+%	hypertexnames=false,
+%	breaklinks,
+%	linkcolor=exlinkcolor,
+%	linkbordercolor=exlinkcolor,
+%	urlcolor=exlinkcolor,
+%	citecolor=exlinkcolor,
+%	%linktocpage = false,
+%	linktoc=all
+%}}
+\urlstyle{same}
+\newcommand{\email}[1]{\protect\href{mailto:#1}{#1}}
+%\hypersetup{colorlinks=false, linktoc=all}
+\hypersetup{
+	colorlinks=true,
+	hypertexnames=false,
+	breaklinks,
+	linkcolor=black,
+	citecolor=exlinkcolor,
+	urlcolor=exlinkcolor,
+%	linkcolor=exlinkcolor,
+%	linkbordercolor=exlinkcolor,
+%	citebordercolor=exlinkcolor,
+%   linktocpage = false,
+	linktoc=all
+}
+
+% Custom section & TOC headers
+\definecolor{chapcolor}{gray}{0.5}
+\setcounter{secnumdepth}{3}
+\makeatletter
+	\titleformat{\chapter}[display]%
+    	{\Huge}%
+		%{\mbox{}\oldmarginpar{\vspace*{-3\baselineskip}\color{CTsemi}\chapterNumber\thechapter}}%
+%		{\mbox{}\oldmarginpar{\vspace*{-3\baselineskip}\chapterNumber\thechapter}}%
+%		{\raggedright\color{chapcolor}\fontsize{34}{34}\selectfont\spacedlowsmallcaps{Chapter \oldstylenums{\thechapter}}}%
+		{\raggedleft\color{chapcolor}\fontsize{34}{34}\textit{\chaptername\xspace \thechapter}}%
+		{1.2cm}%
+%		{\normalsize\titlerule\vspace*{.9\baselineskip}\normalfont\LARGE\textbf}%
+		{\normalfont\LARGE\textbf}%
+		[\normalsize\vspace*{.8\baselineskip}\titlerule]
+	\titleformat{\section}%
+		{\normalfont\Large}%
+		{\textbf{\MakeTextLowercase{\thesection}}}%
+		{1em}%
+		{\textbf}
+	\titleformat{\subsection}%
+		{\normalfont\large}
+		{\textbf{\MakeTextLowercase{\thesubsection}}}%
+		{1em}%
+		{\textbf}
+	\titleformat{\subsubsection}%
+		{\normalfont\normalsize}%
+		{\textbf{\MakeTextLowercase{\thesubsubsection}}}%
+		{1em}%
+		{\textbf}
+	\titleformat{\subparagraph}[runin]%
+		{\normalfont\normalsize}%
+		{\textbf{\MakeTextLowercase{\subparagraph}}}%
+		{1em}%
+		{\textbf}
+    \renewcommand{\cftchappresnum}{\normalfont\textbf}%
+    \renewcommand{\cftchapaftersnumb}{\normalfont\textbf}%
+    \renewcommand{\cftchapfont}{\normalfont\bfseries}% titles in bold
+    \renewcommand{\cftchappagefont}{\normalfont\bfseries}% page numbers in bold
+    \setlength{\cftbeforechapskip}{1.5em}%
+%    \setlength{\cftbeforesecskip}{.1em}%
+%    \setlength{\cftbeforesubsecskip}{.1em}%
+%    \setlength{\cftbeforesubsubsecskip}{.1em}%
+    \setcounter{tocdepth}{3}
+%    \renewcommand{\chaptermark}[1]{\markboth{\spacedlowsmallcaps{#1}}{\spacedlowsmallcaps{#1}}}
+    \renewcommand{\chaptermark}[1]{\markboth{#1}{#1}}
+%    \renewcommand{\sectionmark}[1]{\markright{\textsc{\thesection}\enspace\spacedlowsmallcaps{#1}}}
+%	\renewcommand{\sectionmark}[1]{\markright{\thesection\enspace{#1}}}
+    \renewcommand*\chaptermarkformat{\itshape\chaptername{} \thechapter.\;\;}
+%	\let\MakeMarkcase\spacedlowsmallcaps
+	\let\MakeMarkcase\normalfont
+	\renewcommand{\headfont}{\small}
+	\renewcommand{\footfont}{\small}
+	\automark[chapter]{chapter}
+	\ihead{\MakeTextUppercase{\headmark}}
+	\chead[]{}
+	\ohead[]{} %\ohead{\pagemark}
+	\ifoot[]{}
+	\cfoot[\pagemark]{\pagemark}% only for plain.scrheadings page style (first page of a chapter)
+	\ofoot[]{} %\ofoot[\pagemark]{}
+	\deffootnote[1cm]{0em}{0em}{\textsuperscript{\thefootnotemark}}
+\makeatother
+
+\newpairofpagestyles{blankNumbered}{%
+    \clearscrheadfoot%
+    \clearpairofpagestyles%
+    \KOMAoptions{headsepline=0pt}%
+    \cfoot[\pagemark]{\pagemark}
+    %\ofoot[\pagemark]{\pagemark}
+}
+
+\AtBeginEnvironment{appendices}{\crefalias{chapter}{appendix}}
+
+%\makeatletter
+%\g@addto@macro\appendix{%
+%  \addtocontents{toc}{%
+%    \protect\renewcommand{\protect\cftchappresnum}{\appendixname\space}%
+%  }%
+%}
+%\makeatother
+
+% Math %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsopn}
+\usepackage{bm}
+\usepackage{mathrsfs}
+\usepackage{mathdots}
+\usepackage{mathtools}
+\usepackage[binary-units=true]{siunitx}
+\usepackage{stmaryrd}
+\usepackage{dsfont}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+%\newcommand{\newsiamthm}[2]{
+%  \theoremstyle{plain}
+%  \theoremheaderfont{\normalfont\sc}
+%  \theorembodyfont{\normalfont\itshape}
+%  \theoremseparator{.}
+%  \theoremsymbol{}
+%  \newtheorem{#1}[theorem]{#2}
+%}
+%
+%% Other predefined theorem-like environments
+%\newsiamthm{lemma}{Lemma}
+%\newsiamthm{corollary}{Corollary}
+%\newsiamthm{proposition}{Proposition}
+%\newsiamthm{definition}{Definition}
+
+%\theoremstyle{definition}
+%\newtheorem{definition}[theorem]{Definition}
+%\newtheorem{example}[theorem]{Example}
+%\newtheorem{xca}[theorem]{Exercise}
+
+%\theoremstyle{remark}
+%\newtheorem{remark}[theorem]{Remark}
+
+% References %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\usepackage[norefs,nomsgs]{refcheck}
+
+%\usepackage[%
+%    style=authoryear,%
+%%    dashed=false,%
+%%    doi=false,%
+%%    isbn=false,%
+%%    hyperref=auto,%
+%%    backref,%
+%%    backrefstyle=three,%
+%%    maxbibnames=99,%
+%%    maxcitenames=3,
+%]{biblatex}
+%\bibliography{references.bib}
+
+%\makeatletter
+%\newif\ifBR@star
+%\newcommand\nobibliography{\@ifstar{\BR@nobib{}}{\BR@nobib}}
+%\newcommand\BR@nobib[1]{%
+%  \ifx\relax#1\relax\global\BR@startrue\else\global\BR@starfalse\fi
+%  \begingroup
+%  \ifBR@star\@fileswfalse\fi
+%  \renewenvironment{thebibliography}[1]{%
+%    \usecounter{enumiv}%
+%    \renewcommand\item[1][]{%
+%          \ifx\relax####1\relax\stepcounter\@listctr\fi}%
+%    \ifBR@star \newcommand\BR@bibitem[2][]{}\else
+%    \let\BR@bibitem=\bibitem\fi
+%    \let\bibitem=\BR@b@bibitem}{}%
+%    \let\@biblabel\@gobble
+%  \bibliography{#1}\endgroup
+%  \ifx\relax#1\relax\global\BR@startrue\else\global\BR@starfalse\fi}
+%\newcommand\BR@b@bibitem[2][]{\ifx\relax#1\relax\BR@bibitem{#2}%
+%   \else \BR@bibitem[#1]{#2}\fi \BR@c@bibitem{#2}}
+%\def\BR@c@bibitem#1 #2 \par{{\let\protect\@unexpandable@protect
+%      \expandafter \gdef\csname BR@r@#1\@extra@b@citeb\endcsname
+%      {\BR@nodot#2\relax.\relax\relax}}}
+%\def\BR@nodot#1.\relax#2\relax{#1}
+%%\newcommand\bibentry[1]{\nocite{#1}{\frenchspacing
+%%     \hyper@natanchorstart{#1\@extra@b@citeb}%
+%%     \@nameuse{BR@r@#1\@extra@b@citeb}\hyper@natanchorend}}
+%\newcommand\bibentry[1]{\nocite{#1}{\frenchspacing
+%     \@nameuse{BR@r@#1\@extra@b@citeb}}}
+%\providecommand\@extra@b@citeb{}
+%\providecommand\hyper@natanchorstart[1]{}
+%\providecommand\hyper@natanchorend{}
+%\AtBeginDocument{%
+%  \providecommand*{\urlprefix}{URL }
+%  \providecommand*{\url}[1]{\texttt{#1}}
+%}
+%\AtBeginDocument{\let\BR@bib\bibliography
+%  \def\bibliography{\global\BR@starfalse\BR@bib}}
+%\AtEndDocument{\ifBR@star\PackageWarningNoLine{bibentry}
+%  {You have used \string\nobibliography* \MessageBreak
+%   without a following \string\bibliography.\MessageBreak
+%   You may not be able to run BibTeX}\fi}
+%\AtBeginDocument{\@ifpackageloaded{url}
+%  {\providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}}
+%  {\providecommand{\doi}[1]{doi: #1}}}
+%\makeatother
+
+\usepackage{cite}
+\usepackage{bibentry}
+\makeatletter
+\renewcommand{\bibentry}[1]{\nocite{#1}{\frenchspacing\@nameuse{BR@r@#1\@extra@b@citeb}}}
+\makeatother
+
+\nobibliography*
+\renewcommand{\bibname}{References}
+
+% Customize naming conventions with cleveref:
+\usepackage[capitalize,nameinlink]{cleveref}
+\crefname{section}{section}{sections}
+\crefname{subsection}{subsection}{subsections}
+\Crefname{section}{Section}{Sections}
+\Crefname{subsection}{Subsection}{Subsections}
+\Crefname{figure}{Figure}{Figures}
+% Don't say equation in front on an equation.
+\crefformat{equation}{\textup{#2(#1)#3}}
+\crefrangeformat{equation}{\textup{#3(#1)#4--#5(#2)#6}}
+\crefmultiformat{equation}{\textup{#2(#1)#3}}{ and \textup{#2(#1)#3}}
+{, \textup{#2(#1)#3}}{, and \textup{#2(#1)#3}}
+\crefrangemultiformat{equation}{\textup{#3(#1)#4--#5(#2)#6}}%
+{ and \textup{#3(#1)#4--#5(#2)#6}}{, \textup{#3(#1)#4--#5(#2)#6}}{, and \textup{#3(#1)#4--#5(#2)#6}}
+% But spell it out at the beginning of a sentence.
+\Crefformat{equation}{#2Equation~\textup{(#1)}#3}
+\Crefrangeformat{equation}{Equations~\textup{#3(#1)#4--#5(#2)#6}}
+\Crefmultiformat{equation}{Equations~\textup{#2(#1)#3}}{ and \textup{#2(#1)#3}}
+{, \textup{#2(#1)#3}}{, and \textup{#2(#1)#3}}
+\Crefrangemultiformat{equation}{Equations~\textup{#3(#1)#4--#5(#2)#6}}%
+{ and \textup{#3(#1)#4--#5(#2)#6}}{, \textup{#3(#1)#4--#5(#2)#6}}{, and \textup{#3(#1)#4--#5(#2)#6}}
+% Make number non-italic in any environment.
+\crefdefaultlabelformat{#2\textup{#1}#3}
+
+% Add a serial/Oxford comma in \cref by default.
+\newcommand{\creflastconjunction}{, and~}
+\newcommand{\crefrangeconjunction}{--}
+
+\makeatletter
+\DeclareOldFontCommand{\rm}{\normalfont\rmfamily}{\mathrm}
+\DeclareOldFontCommand{\sf}{\normalfont\sffamily}{\mathsf}
+\DeclareOldFontCommand{\tt}{\normalfont\ttfamily}{\mathtt}
+\DeclareOldFontCommand{\bf}{\normalfont\bfseries}{\mathbf}
+\DeclareOldFontCommand{\it}{\normalfont\itshape}{\mathit}
+\DeclareOldFontCommand{\sl}{\normalfont\slshape}{\@nomath\sl}
+\DeclareOldFontCommand{\sc}{\normalfont\scshape}{\@nomath\sc}
+\makeatother
+
+% Graphics, figures, tables %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{import}
+\usepackage{grffile}
+\usepackage{graphicx}
+\usepackage{overpic}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,plotmarks,positioning,calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\usepgfplotslibrary{patchplots}
+\usepackage{caption}
+\captionsetup{format=plain,%
+             % labelfont={small,sf},% not necessary since `font' applies to both label and text
+             % labelformat=mycaption,
+             font={footnotesize,it}}
+\usepackage[caption=false]{subfig}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{array}
+
+\makeatletter
+\newcommand{\multiline}[1]{%
+  \begin{tabularx}{\dimexpr\linewidth-\ALG@thistlm}[t]{@{}X@{}}
+    #1
+  \end{tabularx}
+}
+\makeatother
+
+\setlength\abovecaptionskip{10pt}
+\setlength\belowcaptionskip{10pt}
+\def\@figtxt{figure}
+\long\def\@makecaption#1#2{%
+    \footnotesize
+    \setlength{\parindent}{1.5pc}
+  \ifx\@captype\@figtxt
+    \vskip\abovecaptionskip
+    \setbox\@tempboxa\hbox{{\normalfont\scshape #1}. {\normalfont\itshape #2}}%
+    \ifdim \wd\@tempboxa >\hsize
+      {\normalfont\scshape #1}. {\normalfont\itshape #2}\par
+    \else
+      \global\@minipagefalse
+      \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+    \fi
+  \else
+    \hbox to\hsize{\hfil{\normalfont\scshape #1}\hfil}%
+    \setbox\@tempboxa\hbox{{\normalfont\itshape #2}}%
+    \ifdim \wd\@tempboxa >\hsize
+      {\normalfont\itshape #2}\par
+    \else
+     \global\@minipagefalse
+      \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+    \fi
+    \vskip\belowcaptionskip
+  \fi}
+
+% Algorithms %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{algorithmicx}
+\usepackage[noend]{algpseudocode}
+\usepackage{algorithm}
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\makeatletter
+\algrenewcommand\ALG@beginalgorithmic{\small}
+\makeatother
+
+\usepackage{listings}
+\usepackage{matlab-prettifier}
+%\lstdefinestyle{matlab-custom}{
+%%	language=Matlab,
+%	basicstyle=\footnotesize\mlttfamily,
+%	keywordstyle=\footnotesize\mlttfamily,
+%	emph={function, if, else, elseif, for, end},
+%	emphstyle={\color{blue}}
+%%	commentstyle=\itshape\color{purple!40!black},
+%%	identifierstyle=\color{blue},
+%%	stringstyle=\color{orange}
+%}
+%%\lstset{emph={function, if, else, elseif, for, end}, emphstyle={\color{blue}}}
+
+% Numbering %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\numberwithin{equation}{section}
+\numberwithin{theorem}{section}
+\numberwithin{algorithm}{section}
+%\numberwithin{figure}{section}
+%\numberwithin{table}{section}
+
+% Macros %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\DeclareMathOperator{\dn}{dn}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\vecop}{vec}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\renewcommand{\vec}[1]{\bm{#1}}
+\newcommand{\dt}{\Delta t}
+\newcommand{\trans}{\top}
+\newcommand{\ldbrace}{\{\!\!\{}
+\newcommand{\rdbrace}{\}\!\!\}}
+\newcommand{\ldbrack}{[\![}
+\newcommand{\rdbrack}{]\!]}
+\newcommand{\avg}[1]{\ldbrace #1 \rdbrace}
+\newcommand{\jump}[1]{\ldbrack #1 \rdbrack}
+\newcommand{\flux}[1]{\widehat{#1}}
+\protected\def\f{f}
+\protected\def\c{c}
+\def\ultraSEM{\texttt{\upshape ultraSEM}\xspace}
+\newcommand{\dtn}{\Sigma}
+\newcommand{\mytt}[1]{{\mlttfamily #1}}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+\newcommand{\R}[0]{\mathbb{R}}
+\newcommand{\C}[0]{\mathbb{C}}
+\newcommand{\ttrank}{{\rm rank}^{\rm TT}}
+\newcommand{\mlrank}{{\rm rank}^{\rm ML}}
+\newcommand{\cprank}{{\rm rank}^{\rm CP}}
+\newcommand{\rank}{{\rm rank}}
+\newcommand{\lex}{<_{\rm lex}}
+\newcommand{\lexeq}{\le_{\rm lex}}
+\def\CPP{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}}}
+
+\protected\def\squaresymbol{%
+    \scalebox{0.8}{%
+        \raisebox{0.08em}{%
+            \color[HTML]{0060ad}$\blacksquare$%
+        }%
+    }%
+    \hspace{0.2em}%
+}
+
+\protected\def\bulletsymbol{%
+    \scalebox{1.5}{%
+        \raisebox{-0.03em}{%
+            \color[HTML]{003866}$\bullet$%
+        }%
+    }%
+    \hspace{0.2em}%
+}
+
+\protected\def\trianglesymbol{%
+    \scalebox{1.1}[0.9]{%
+        \raisebox{0.1em}{%
+            \color[HTML]{008cff}$\blacktriangle$%
+        }%
+    }%
+    \hspace{0.2em}%
+}
+\protected\def\xsymbol{%
+    \scalebox{0.9}{%
+        \raisebox{0.08em}{%
+            $\bm{\times}$%
+        }%
+    }%
+    \hspace{0.2em}
+}
+\protected\def\diamondsymbol{%
+    \raisebox{0.1em}{%
+        \scalebox{0.7}{%
+            \rotatebox[origin=c]{45}{%
+                \color[HTML]{4dafff}$\blacksquare$%
+            }%
+        }%
+    }%
+    \hspace{0.2em}%
+}
+
+\protected\def\triangledownsymbol{%
+    \scalebox{1.1}[0.9]{%
+        \raisebox{0.1em}{%
+            \color[HTML]{004680}$\blacktriangledown$%
+        }%
+    }%
+    \hspace{0.2em}%
+}
+
+\protected\def\plussymbol{%
+    \scalebox{0.9}{%
+        \raisebox{0.08em}{%
+            $\bm{+}$%
+        }%
+    }%
+    \hspace{0.2em}%
+}
+
+\protected\def\circlesymbol{%
+    \scalebox{0.7}{%
+        \raisebox{0.15em}{%
+            $\bigcirc$%
+        }%
+    }%
+    \hspace{0.2em}%
+}
+
+\def\intcolor{cyan!60}
+\def\extcolor{red!60}
+\def\radius{0.09}
+
+%% Align dashed line to corners to shapes
+\usetikzlibrary{decorations}
+\makeatletter
+\def\pgf@dec@dashon{5pt}
+\def\pgf@dec@dashoff{5pt}
+\pgfkeys{/pgf/decoration/.cd,
+  dash on/.store in=\pgf@dec@dashon,
+  dash off/.store in=\pgf@dec@dashoff
+}
+\pgfdeclaredecoration{aligned dash}{start}{
+\state{start}[width=0pt, next state=pre-corner,persistent precomputation={
+\pgfextract@process\pgffirstpoint{\pgfpointdecoratedinputsegmentfirst}%
+\pgfextract@process\pgfsecondpoint{\pgfpointdecoratedinputsegmentlast}%
+\pgfmathsetlengthmacro\pgf@dec@dashon{\pgf@dec@dashon}%
+\pgfmathsetlengthmacro\pgf@dec@dashoff{\pgf@dec@dashoff}%
+\pgfmathsetlengthmacro\pgf@dec@halfdash{\pgf@dec@dashon/2}%
+}]{}
+\state{pre-corner}[width=\pgfdecoratedinputsegmentlength, next state=post-corner, persistent precomputation={
+%
+  \pgfmathparse{int(ceil((\pgfdecoratedinputsegmentlength-\pgf@dec@dashon-\pgf@dec@dashoff)/(\pgf@dec@dashon+\pgf@dec@dashoff)))}%
+  \let\pgf@n=\pgfmathresult
+  \pgfmathsetlengthmacro\pgf@b%
+    {\pgfdecoratedinputsegmentlength/(\pgf@n+1)-\pgf@dec@dashon}%
+  \ifdim\pgf@b<\pgf@dec@dashoff\relax%
+    \pgfmathparse{int(\pgf@n-1)}\let\pgf@n=\pgfmathresult%
+    \pgfmathsetlengthmacro\pgf@b%
+      {\pgfdecoratedinputsegmentlength/(\pgf@n+1)-\pgf@dec@dashon}%
+  \fi%
+  \pgfmathsetlengthmacro\pgf@b{\pgf@b+\pgf@dec@dashon}%
+}]{%
+  \pgfmathloop
+  \ifnum\pgfmathcounter>\pgf@n%
+  \else%
+    \pgfpathmoveto{\pgfpoint{\pgf@b*\pgfmathcounter-\pgf@dec@halfdash}{0pt}}%
+    \pgfpathlineto{\pgfpoint{\pgf@b*\pgfmathcounter+\pgf@dec@halfdash}{0pt}}%
+  \repeatpgfmathloop%
+  \pgfpathmoveto%
+    {\pgfpoint{\pgfdecoratedinputsegmentlength-\pgf@dec@halfdash}{0pt}}%
+  \pgfpathlineto%
+    {\pgfpointdecoratedinputsegmentlast}
+}
+\state{post-corner}[width=0pt, next state=pre-corner]{
+   \pgfpathlineto{\pgfpoint{\pgf@dec@halfdash}{0pt}}%
+}
+\state{final}{
+  \pgftransformreset%
+  \pgfpathlineto{\pgfpointlineatdistance{\pgf@dec@halfdash}{\pgffirstpoint}{\pgfsecondpoint}}%
+}
+}
+\tikzset{aligned dash/.style={
+  decoration={aligned dash, #1}, decorate
+}}

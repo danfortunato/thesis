@@ -1,0 +1,62 @@
+\definecolor{mygreen}{rgb}{0,0.6,0}
+
+\chapter{MATLAB code to compute ADI shifts}\label{app:\chap:ADIshifts}
+Below we provide the MATLAB code that we use to compute the ADI shifts in \cref{eq:\chap:OptimalShifts}. Readers may notice that in \cref{eq:\chap:OptimalShifts} the arguments of the complete elliptic integral and Jacobi elliptic functions involve $\sqrt{1-1/\alpha^2}$, while the arguments in the code involve $1-1/\alpha^2$, i.e., square roots are missing in the code. This is an esoteric MATLAB convention of the \mytt{ellipke} and \mytt{ellipj} commands, which we believe is for numerical accuracy. If one attempts to rewrite our code in another programming language, then one needs to be careful about the conventions in the analogues of the \mytt{ellipke} and \mytt{ellipj} commands.
+
+\vspace{1em}
+\lstinputlisting[frame=single,style=Matlab-editor,basicstyle=\footnotesize\mlttfamily]{chapters/\chap/ADIshifts.m}
+
+
+\chapter{Bounding eigenvalues}\label{app:\chap:spectrum}
+In \cref{sec:\chap:PoissonSquare} a spectral discretization of Poisson's equation on the square is derived as $\tilde{A}X - X\tilde{B} = F$, where $\tilde{A}$ is a real symmetric pentadiagonal matrix and $\tilde{B} = -\tilde{A}^T$. Here, we prove that P2 holds for the Sylvester matrix equation by showing that $\sigma(\tilde{A})\in [-1/2,-1/(2n^4)]$. The bound on the spectrum of $\tilde{A}$ is stated in the following lemma, which we use to determine the number of ADI iterations for our fast Poisson solver on the square.
+
+\begin{lemma}
+Let $\tilde{A}\in\mathbb{C}^{n\times n}$ be the matrix given in \cref{eq:\chap:ADIfriendlySylvester}. Then
+\begin{equation}
+\sigma(\tilde{A}) \subset \left[ -\frac{1}{2}, -\frac{1}{2n^4} \right],
+\label{eq:\chap:SpectrumBound}
+\end{equation} 
+where $\sigma(\tilde{A})$ is the spectrum of $\tilde{A}$. 
+\label{lem:EigenvaluesOfA2}
+\end{lemma}
+
+\begin{proof}
+The matrix $\tilde{A} = D_s^{-1} A D_s = D_s^{-1} D^{-1} M D_s = D^{-1/2} M D^{-1/2}$ for $D_s = D^{-1/2}$, where $D$ is a diagonal matrix. The matrix $M$ here represents multiplication by $1-x^2$ in the $C^{(3/2)}$ basis and thus $M$ is positive definite as its eigenvalues are the values of $1-x_j^2$, where $x_j$ are the $\smash{C^{(3/2)}}$ Gauss quadrature nodes with $-1<x_j<1$. The matrix $D$ is negative definite as its diagonal entries are all negative, which implies that $D^{-1/2} = i \operatorname{Re}(D^{-1/2})$. Therefore we can write $\tilde{A} = -C^T C$, where $C = M^{1/2} D^{-1/2}$ and so $\tilde{A}$ is negative definite.
+
+The (absolute) minimal eigenvalue of $\tilde{A}$ is given by $\lambda_\text{min}(\tilde{A}) = \lambda_\text{min}(-C^T C) = \min_{\|v\|_2=1} \|Cv\|_2^2$. Let $w$ be proportional to the normalized vector minimizing $\|M^{1/2} w\|_2^2$, which is equal to $(1-x_0^2)\|w\|_2^2$, where $x_0$ is the leftmost $C^{(3/2)}$ Gauss node. From the bounds given in~\cite{Dimitrov_10_01}, one may verify that
+\[
+1-x_0^2 \geq \frac{b+(n-2)\sqrt{\delta}}{a} \geq \frac{1}{n^2}, \qquad
+\begin{aligned}
+a &= (1+2n)(10+n/2+n^2) \\
+b &= n^3+n^2+n/2+2 \\
+\delta &= n^4+6n^3+13n^2+36n+16
+\end{aligned}
+\]
+for all $n>0$. Then if we set $v = D^{1/2} w$, we obtain
+\[
+\|C v\|_2^2 = \|M^{1/2} w\|_2^2 = (1-x_0^2) \|w\|_2^2 \geq \frac{1-x_0^2}{(n-1)(n+2)+2} \|v\|_2^2 \geq \frac{1}{2n^4}.
+\]
+for all $n>0$.
+
+The (absolute) maximal eigenvalue of $\tilde{A}$ is given by
+\[
+\lambda_\text{max}(\tilde{A}) = \|\tilde{A}\|_2 = \|D^{-1/2} M D^{-1/2}\|_2 \leq \|D^{-1/2}\|_2 \|M\|_2 \|D^{-1/2}\|_2 \leq 1/2,
+\]
+since $\|D^{-1/2}\|_2 = 1/\sqrt{2}$ and $\|M\|_2 \leq 1$.
+\end{proof}
+
+
+\chapter{Constructing an interpolant of Dirichlet data}\label{app:\chap:BCs}
+
+Consider Dirichlet data on the square domain $[-1,1]^2$. Let $g_\text{left}, \,g_\text{right}, \,g_\text{bottom}, \,g_\text{top} \in \mathbb{C}^n$ represent the univariate Chebyshev coefficients of Dirichlet data on the left, right, bottom, and top of the square domain, respectively, and assume that compatibility conditions are met so that the function values match at the four corners of the square. Then $g_\text{left}$, $g_\text{right}$, $g_\text{bottom}$, and $g_\text{top}$ encode $4n-4$ degrees of freedom, and a bivariate interpolant may be constructed whose Chebyshev coefficients $X_\text{bc} \in \mathbb{C}^{n \times n}$ are given by specifying $4n-4$ entries in the first two columns and rows, i.e.,
+\[
+\begin{aligned}
+X_\text{bc}(1,3\!:\!n) &= \frac{g_\text{bottom}(3\!:\!n) + g_\text{top}(3\!:\!n)}{2}, \\
+X_\text{bc}(2,3\!:\!n) &= \frac{g_\text{bottom}(3\!:\!n) - g_\text{top}(3\!:\!n)}{2}, \\
+X_\text{bc}(3\!:\!n,1) &= \frac{g_\text{right}(3\!:\!n) + g_\text{left}(3\!:\!n)}{2}, \\ %&\quad X_\text{bc}(1,3\!:\!n) &= \frac{g_\text{bottom}(3\!:\!n) + g_\text{top}(3\!:\!n)}{2}, \\
+X_\text{bc}(3\!:\!n,2) &= \frac{g_\text{right}(3\!:\!n) - g_\text{left}(3\!:\!n)}{2}, \\% &\quad X_\text{bc}(2,3\!:\!n) &= \frac{g_\text{bottom}(3\!:\!n) - g_\text{top}(3\!:\!n)}{2},
+X_\text{bc}(1\!:\!2,1) &= \frac{g_\text{right}(1\!:\!2) + g_\text{left}(1\!:\!2)}{2} - \sum_{\substack{k=3 \\ k \text{ odd}}}^n X_\text{bc}(1\!:\!2, k), \\
+X_\text{bc}(1\!:\!2,2) &= \frac{g_\text{right}(1\!:\!2)  - g_\text{left}(1\!:\!2)}{2} - \sum_{\substack{k=4 \\ k \text{ even}}}^n X_\text{bc}(1\!:\!2, k), \\
+\end{aligned}
+\]
+with $X_\text{bc}(3\!\!:\!\!n, 3\!\!:\!\!n) = 0$. The function represented by the bivariate Chebyshev coefficients $X_\text{bc}$ matches the Dirichlet data on the four sides of the square domain, and its smoothness is limited only by the smoothness of the Dirichlet data. Similar interpolating functions can be constructed to match Dirichlet data on the cylinder, sphere, and cube.

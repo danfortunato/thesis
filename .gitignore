@@ -1,0 +1,19 @@
+# LaTeX intermediate files
+*.aux
+*.bbl
+*.out
+*.blg
+*.lof
+*.log
+*.lot
+*.spl
+*.fdb_latexmk
+*.fls
+*.toc
+*.idx
+*.ilg
+*.dvi
+*.synctex.gz
+
+# Mac OS files
+.DS_Store?

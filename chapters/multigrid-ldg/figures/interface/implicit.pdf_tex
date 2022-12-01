@@ -1,0 +1,70 @@
+%% Creator: Inkscape inkscape 0.92.2, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'implicit.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{2981.33789063bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,1.08519367)%
+    \put(0,0){\includegraphics[width=\unitlength,page=1]{implicit.pdf}}%
+    \put(0.85345326,0.79022528){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{A}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=2]{implicit.pdf}}%
+    \put(0.72725395,0.59670313){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{B}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=3]{implicit.pdf}}%
+    \put(0.44729823,0.48565518){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{C}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=4]{implicit.pdf}}%
+    \put(0.60481441,0.39411144){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\text{D}_1$}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=5]{implicit.pdf}}%
+    \put(0.83199662,0.38064313){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\text{D}_2$}}}%
+    \put(0.75635039,0.82142778){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{Level 1}}}%
+    \put(0.2431582,0.82142778){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{Finest mesh (level 0)}}}%
+    \put(0.75635039,0.54973771){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{Level 3}}}%
+    \put(0.2431582,0.55068599){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{Level 2}}}%
+    \put(0.75635039,0.27667595){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{Level 5}}}%
+    \put(0.2431582,0.27666368){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{Level 4}}}%
+    \put(0.49975673,0.00205387){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{Bottom level}}}%
+  \end{picture}%
+\endgroup%

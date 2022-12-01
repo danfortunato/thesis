@@ -1,0 +1,266 @@
+\chapter{Introduction}\label{sec:\chap}
+
+%\section{Outlook}
+
+Physical simulation is an important part of modern science. In addition to theory and experiment, it has emerged as a third pillar for scientific inquiry. The ability to run experiments, test hypotheses, and validate data on a computer has quickened the pace of discovery and prototyping in academia and industry over the last half-century, and today computation plays a fundamental role in nearly all areas of science and engineering.
+
+Underpinning the computation revolution is the application of mathematical ideas to the development of numerical algorithms. In tandem with the decades-long advancement in computing power due to Moore's law~\cite{Moore}, strides in numerical analysis---realized as efficient and accurate algorithms to solve the problems of continuous mathematics---have enabled computational science to flourish~\cite{CSE_Outlook_SIAM}. The focus of this thesis is on the development of efficient algorithms for the high-order accurate numerical solution of elliptic partial differential equations (PDEs). %Three algorithms for the solution of elliptic PDEs are presented: a fast direct solver for a global spectral method, a fast direct solver for a spectral element method, and a multigrid solver for a discontinuous Galerkin method.
+
+\section{Elliptic PDEs}
+
+Elliptic PDEs arise as components in the physical models and solution methods for a variety of problems, and commonly appear in the following contexts:
+
+\vspace{0.2em}
+\begin{itemize}
+
+\item \textbf{Physical models.} Elliptic PDEs describe the steady-state, equilibrium behavior of many physical phenomena, such as gravitation, electrostatics, and elastostatics. Poisson's equation is the prototypical elliptic PDE,
+\[
+\nabla^2 \phi = f,
+\]
+and arises in a wide variety of physical contexts. Interpreting $\phi$ as the density of some quantity (e.g., chemical concentration in space), Poisson's equation describes the distribution of $\phi$ in equilibrium when subject to external forcing $f$~\cite{Evans_10_01}. If $\rho$ is an electric charge density, then the electric potential $\phi$ due to $\rho$ satisfies the Poisson equation
+\[
+\nabla^2 \phi = -\frac{\rho}{\epsilon_0},
+\]
+where $\epsilon_0$ is the permittivity of free space. If $\rho$ is a mass density, then the gravitational potential $\phi$ due to $\rho$ satisfies the Poisson equation
+\[
+\nabla^2 \phi = 4\pi G \rho,
+\]
+where $G$ is the gravitational constant.
+
+\item \textbf{Projection methods}. Consider the incompressible Navier--Stokes equations,
+\begin{align}
+\label{eq:\chap:nav1}
+\rho \left( \frac{\partial \vec{u}}{\partial t} + \vec{u} \cdot \nabla \vec{u} \right) &= -\nabla p + \mu \nabla^2 \vec{u}, \\
+\label{eq:\chap:nav2}
+\nabla \cdot \vec{u} &= 0,
+\end{align}
+which describe the motion of an incompressible viscous fluid with velocity $\vec{u}$, pressure $p$, constant density $\rho$, and constant viscosity $\mu$. To solve these equations numerically, projection methods~\cite{Chorin_67_01,Chorin_68_01} are often used, which enforce the fluid velocity $\vec{u}$ to be divergence-free at each time step of a simulation. Let $\vec{u}^k$ and $p^k$ denote the velocity and pressure, respectively, at time step $k$ of a simulation with step size $\Delta t$. Projection methods compute an intermediate velocity $\vec{u}^*$ through an update rule which fixes the pressure term in \cref{eq:\chap:nav1} (e.g., by extrapolating a guess for $p$ from the previous time step or by setting $p=0$, as below),
+% Generally, projection methods use some guess/approximation of the pressure, which could be zero but more likely an extrapolation from previous time step
+\[
+\rho\left( \frac{\vec{u}^* - \vec{u}^k}{\Delta t} + \vec{u}^k \cdot \nabla \vec{u}^k \right) = \mu \nabla^2 \vec{u}^*,
+\]
+followed by an implicit update rule for $\vec{u}^{k+1}$ which ignores everything but the pressure term,
+\begin{equation}\label{eq:\chap:proj2}
+\rho\left( \frac{\vec{u}^{k+1} - \vec{u}^*}{\Delta t} \right) =  -\nabla p^{k+1}.
+\end{equation}
+However, the pressure $p^{k+1}$ is not known and must be computed so that the resulting velocity field $\vec{u}^{k+1}$ is incompressible. Taking the divergence of \cref{eq:\chap:proj2} and enforcing the incompressibility condition \cref{eq:\chap:nav2} yields the pressure Poisson equation for the unknown pressure $p^{k+1}$,
+\begin{equation}\label{eq:\chap:proj3}
+\nabla^2 p^{k+1} = \frac{\rho}{\Delta t} \, \nabla \cdot \vec{u}^*.
+\end{equation}
+This elliptic PDE is the key step to enforcing incompressibility in any projection method and must be solved at each time step. An elliptic PDE solver is often the computational bottleneck in large-scale incompressible fluid simulations due to its role in both projection and viscous solves~\cite{Liu_16_01}.
+
+\item \textbf{Implicit time-stepping schemes.} Consider a time-dependent parabolic PDE such as the heat equation,
+\begin{equation}\label{eq:\chap:heat}
+\frac{\partial u}{\partial t} = \kappa \nabla^2 u,
+\end{equation}
+which describes how temperature $u$ diffuses in a domain with diffusivity $\kappa$. Implicit time-stepping schemes are often used for equations where diffusion processes dominate, as their stability permits large time steps to be taken beyond the Courant--Friedrichs--Lewy limit of $\Delta t \lesssim h^2$ in explicit schemes~\cite{Courant_28_01}, which can be restrictive when the mesh size $h$ is very small. The implicit Euler scheme applied to \cref{eq:\chap:heat} yields a semi-discrete equation for the unknown temperature, $u^{k+1}$, at time step $k+1$,
+\[
+u^{k+1} - \Delta t \kappa \nabla^2 u^{k+1} = u^k.
+\]
+This is an elliptic PDE which must be solved once per time step to obtain the unknown temperature at the next point in time. In equations where diffusion is not the dominant physical process (e.g., where diffusion competes with convection and reaction processes), implicit-explicit (IMEX) time integration schemes can be used to alleviate the severe time step restrictions imposed by competing length scales~\cite{Ascher_95_01,Ruuth_95_01}, and an elliptic PDE may need to be solved at each implicit step of an IMEX scheme.
+
+\end{itemize}
+
+%The algorithms presented herein are high-order accurate and asymptotically fast methods for the numerical solution of elliptic PDEs---a class of problems that describes aspects of many physical phenomena, including fluid dynamics, solid mechanics, electromagnetism, acoustics, heat conduction, and diffusion.
+
+%The solution of elliptic PDEs is often a bottleneck in physical simulations, and so advancements in solvers for this class of problems can have a significant impact on overall simulation time and accuracy.
+
+The development of fast solvers for elliptic PDEs is a beautiful subfield of numerical analysis and has a rich history, from the fast Fourier transform (FFT) and fast diagonalization techniques (1965)~\cite{Cooley_65_01}, to cyclic reduction (1970)~\cite{Buzbee_70_01}, to multigrid methods (1977)~\cite{Brandt_77_01}, to hierarchical low-rank approximation and the fast multipole method (1987)~\cite{Greengard_87_01}. The application of fast methods to high-order accurate discretizations of PDEs is an area of active research, and forms the motivation for much of this thesis.
+
+\section{High-order methods}
+
+%Algorithms for the solution of elliptic PDEs have been developed based on a broad range of mathematical ideas. In general, a PDE is discretized by approximating functions and differential operators according to some parameter, e.g., a grid spacing or mesh size $h$, a polynomial order $p$, or a quadrature size $N$. Error between the computed solution and true solution, $\epsilon$, is decreased by changing this parameter, e.g., by using a finer grid ($h \to 0$), a higher degree polynomial ($p \to \infty$), or more quadrature points ($N \to \infty$). The mathematical theory behind a given algorithm can reveal precisely how fast the error decreases as the discretization parameters are changed.
+
+Algorithms for the solution of elliptic PDEs have been developed based on a broad range of mathematical ideas. In general, a PDE is discretized by approximating functions and differential operators according to some parameter, e.g., a grid spacing or mesh size $h$, a polynomial order $p$, or a quadrature size $N$. Error between the computed solution and true solution, $\epsilon$, is decreased by changing this parameter, e.g., by using a finer grid ($h \to 0$), a higher degree polynomial ($p \to \infty$), or more quadrature points ($N \to \infty$). Classical discretization techniques, such as finite difference methods or finite volume methods, typically control this error to a low order of accuracy. For a $k$th order finite difference scheme, the error $\epsilon$ decreases algebraically as $\mathcal{O}(h^k)$, and low-order schemes often use $1 \leq k \leq 4$. When $k=2$, for instance, halving the parameter $h$ by using twice as many grid points in each dimension causes the error to decrease by a factor of four. Obtaining multiple digits of accuracy may require many successive refinements of $h$, each requiring more computation time than the last. 
+
+%While low-order methods have found widespread success in many fields---and indeed are the predominant methods used today---many scientific questions require answers to be computed to an accuracy that would be computationally infeasible to achieve with such methods.
+
+While low-order methods have found widespread success in many fields, high-order methods---typified by their high rate of convergence to the solution---offer an attractive alternative. For a given computational cost, high-order methods can produce results to a higher accuracy than traditional low-order techniques can. In large-scale simulations where spatial resolution is already as refined as modern computers allow (e.g., in simulations of the Earth's mantle~\cite{Rudi_15_01} or aerospace simulations~\cite{FUN3D}), high-order accurate algorithms may allow for increased resolution of turbulent fluid flows or high-frequency wave scattering at the same computational cost. On high-performance computers where simulations are increasingly memory-bound, simulation time can depend largely on the amount of communication per degree of freedom. High-order methods efficiently utilize this communication bandwidth by inherently providing more computation per degree of freedom (e.g., by interpolating data from many neighboring grid points at once), making them well suited to data parallelism and well poised to leverage high-bandwidth hardware such as graphics processing units (GPUs)~\cite{NASA_Vision_2030}.
+
+We now briefly describe three high-order accurate discretization techniques, ordered by the smoothness of the approximations they construct, from most smooth to least smooth. Each of the main chapters in this thesis focuses on deriving fast solvers for elliptic PDEs based on one of these methods.
+
+\subsection{Global spectral methods}
+% Orthogonal poly
+
+On simple geometries, the solution to a PDE may be approximated as a linear combination of basis functions defined over the entirety of the geometry. Such a representation---known as a global spectral method---is global in the sense that the smoothness of the resulting approximation is only limited by the smoothness of the continuous solution. Approximations based on global spectral methods can converge rapidly when the solution is smooth~\cite{ATAP}, assuming a stable spectral method is used~\cite{Trefethen_00_01}. For example, the error in the degree-$p$ Fourier series approximation to a $C^\infty$ periodic function on $[-1,1]$ decreases as $\mathcal{O}(p^{-m})$ for every $m$; if the function is analytic in a complex strip about the real axis, then convergence at a rate of $\mathcal{O}(C^{-p})$ for $C>1$ is achieved~\cite{Trefethen_00_01}. In practice, one may approximate functions via coefficients in a series expansion or via values through interpolation on a grid (i.e., spectral collocation). Differential operators may be represented by their action on these coefficients or values, allowing linear differential equations to be discretized into linear systems of equations.
+
+The choice of basis affects important properties of the resulting linear systems. In a spectral collocation method, differentiation maps function values on a grid to values of the derivative of the unique global interpolant over that same grid. That is, given a set of $p+1$ nodes $\{x_k\}_{k=0}^{p}$ and values $\{u(x_k)\}_{k=0}^{p}$ of a function $u$, the derivative $u'(x)$ is approximated at $\{x_k\}$ through differentiation of the unique interpolant, $\mathbb{I}_{\{u(x_j)\}}(x)$, i.e.,
+\[
+u'(x_k) \approx ( \mathbb{I}_{\{u(x_j)\}} )' (x_k), \qquad k = 0, \ldots, p.
+\]
+As the derivative of $u$ at the $k$th point depends on the values of $u$ at all points, differentiation is discretized as a dense matrix, and spectral collocation leads to dense discretizations of differential equations.
+
+In stark contrast, the classical Fourier spectral method---which represents periodic functions through coefficients in a Fourier series expansion---exploits the fact that differentiation can be represented in the Fourier basis as a diagonal scaling. If we approximate a function $u$, periodic on $[-\pi,\pi]$ and continuous with bounded variation, by the degree-$p$ Fourier series
+\[
+u(x) \approx \sum_{k=-p/2}^{p/2} a_k e^{ikx}, \qquad x \in [-\pi,\pi],
+\]
+whose coefficients $\{a_k\}$ can be computed via the fast Fourier transform~\cite{Cooley_65_01}, then the derivative of $u$ can be naturally approximated in the same form, i.e.,
+\[
+u'(x) \approx \sum_{k=-p/2}^{p/2} (ik a_k) e^{ikx}, \qquad x \in [-\pi,\pi].
+\]
+This fact allows the Fourier spectral method to discretize differential equations with periodic boundary conditions into sparse linear systems. In the non-periodic setting, a function $u$, continuous with bounded variation on $[-1,1]$, may be naturally represented by the degree-$p$ Chebyshev series
+\[
+u(x) \approx \sum_{k=0}^{p} a_k T_k(x), \qquad x \in [-1,1],
+\]
+with Chebyshev coefficients $\{a_k\}$, where $T_k(x) = \cos(k \cos^{-1} x)$ is the degree-$k$ Chebyshev polynomial of the first kind. However, differentiation is an upper-triangular operation here, as the representation of $T_k'(x)$ in the Chebyshev basis is a global one, i.e.,
+\[
+T_k'(x) = \begin{cases}
+2k \sum_{j \text{ odd}}^{k-1} T_j(x), & k \text{ even} \\
+2k \sum_{j \text{ even}}^{k-1} T_j(x)-1, & k \text{ odd}
+\end{cases}
+\]
+Approaches for non-periodic problems based on differentiation in the Chebyshev basis---notably, the Chebyshev tau method~\cite{Lanczos_38_01,Ortiz_69_01,Orszag_71_01,Orszag_77_01,Ortiz_81_01}---thus lead to dense linear systems of equations. However, recent advances in non-periodic spectral methods allow differential equations to be discretized into sparse linear systems by carefully changing polynomial bases when differentiation is performed~\cite{Olver_13_01,Olver_13_01_inf,Townsend_15_01,Olver_19_01}. Such sparse discretizations have renewed interest in the development of fast solvers for spectral methods, and play a central role in \cref{sec:fast-spectral-poisson,sec:ultraSEM} of this thesis.
+
+%\[
+%\begin{aligned}
+%u(x) &\approx &&\hspace{-0.5cm}\sum_{k=-p/2}^{p/2} \hspace{-0.45cm}&&a_k e^{ikx}, \;\; &&x \in [-\pi,\pi] \quad &&\text{\emph{``Fourier''}} \\
+%%f(x) &\approx &&\hspace{-0.15cm}\sum_{k=0}^{p} \hspace{-0.15cm}&&a_k \ell_k(x), \;\; &&x \in [-1,1] \quad &&\text{\emph{``Lagrange''}} \\
+%u(x) &\approx &&\hspace{-0.15cm}\sum_{k=0}^{p} \hspace{-0.15cm}&&a_k T_k(x), \;\; &&x \in [-1,1] \quad &&\text{\emph{``Chebyshev''}}
+%\end{aligned}
+%\]
+
+%\[
+%f(x) \approx \sum_{k=-p/2}^{p/2} a_k e^{ikx} \longrightarrow f(x) \approx \sum_{k=0}^{p} f_k \ell_k(x)
+%\]
+
+%\begin{figure}[htb]
+%  \centering
+%  \emph{``Fourier''} \qquad\qquad \emph{``Collocation''} \\
+%  \[
+%    u(x) \approx \sum_{k=-p/2}^{p/2} a_k e^{ikx} \qquad\qquad u(x) \approx \sum_{k=0}^{p} f_k \ell_k(x)
+%  \]
+%\caption{Hello}
+%\label{fig:\chap:fourier}
+%\end{figure}
+
+These ideas extend beyond one dimension. Multivariate polynomials that are orthogonal on a variety of simple domains may be constructed directly~\cite{Dunkl_14_01} (e.g., Zernike polynomials on the disk~\cite{Zernike_34_01}, spherical harmonics on the sphere~\cite{Atkinson_12_01}, Koornwinder polynomials on the triangle~\cite{Koornwinder_75_01}) or through tensor products of one-dimensional bases\cite{Trefethen_00_01,Boyd_01_01,Townsend_13_01,Townsend_16_01,Wilber_16_01,Wilber_17_01}, and global spectral methods for the solution of PDEs may be developed analogously. \cref{sec:fast-spectral-poisson} develops optimal complexity solvers for Poisson's equation based on global spectral methods in two and three dimensions. %Using a degree $p \times p$ spectral discretization on the square $[-1,1]^2$, the solution to Poisson's equation with Dirichlet boundary conditions is computed in $\mathcal{O}(p^2 (\log p)^2)$ operations by exploiting a separated spectra property in the discrete differential operators.
+
+\subsection{Spectral element methods}
+% Why is high-order SEM useful
+
+Spectral element methods (SEMs)~\cite{Patera_84_01} extend the approximation power of global spectral methods to domains with meshed geometries. In an SEM, a domain is meshed into a union of elements (e.g., triangles or quadrilaterals in two dimensions) and a piecewise polynomial basis on each element is used to approximate functions locally. A global representation of the solution is obtained through the union of the spectral representations local to each element, which are typically enforced to be continuous or continuously differentiable across element interfaces. Convergence is achieved by either refining the mesh ($h$-refinement) or increasing the polynomial degree on the elements ($p$-refinement). In theory, super-algebraic convergence can be observed---even for solutions with singularities---by optimally selecting a refinement strategy ($hp$-adaptivity)~\cite{Babuska_86_01}. However, $hp$-adaptivity theory can require high polynomial degrees which are rarely used in practice, as traditional collocation-based methods can have prohibitive computational costs and numerical stability issues in this regime.
+
+In particular, constructing efficient solvers for traditional high-order nodal element methods can be challenging. Direct solvers can become computationally intractable even for relatively small polynomial degrees as nodal discretizations result in dense linear algebra; in $d$ dimensions, the computational complexity for a direct solver na\"{i}vely scales as $\mathcal{O}(p^{3d})$. Iterative solvers may require an increasing number of iterations as $p$ increases because of the difficulties in designing robust preconditioners in the high $p$ regime~\cite{Orszag_80_01}. Because of these challenges, traditional element methods are typically restricted to low polynomial degrees, and $h$-refinement is generically preferred over $p$-refinement irrespective of local error estimators~\cite{Vos_10_01}. %In practice, the physical considerations of the PDE---informed by $hp$-adaptivity theory---can take a back seat to the computational considerations of the numerical method.
+Even when $hp$-adaptivity theory---based on the regularity of the PDE solution---indicates that high $p$ should be used, this advice is often ignored due to the computational cost of the high-$p$ regime.
+
+In \cref{sec:ultraSEM}, we present an SEM based on a sparse global spectral method with a direct solver that scales as $\mathcal{O}(p^4)$ when a degree $p \times p$ discretization is used on each element in 2D. The method is competitive for very high polynomial degrees (e.g., $p \leq 100$), allowing for extensive $p$-refinement to be performed in regions where the solution is smooth, and is packaged into a software library, \ultraSEM, suitable for flexible spectral element computations. The sparse discretizations used by \ultraSEM enable users to compute with higher $p$ than current SEM libraries (such as Nektar++~\cite{Nektar,Nektar2}, Nek5000~\cite{Nek5000}, MFEM~\cite{MFEM}, and Firedrake~\cite{Firedrake}) allow.
+
+\subsection{Discontinuous Galerkin methods}
+% Discuss solvers for DG for elliptic problems.
+
+An approximation to the solution need not be continuous over the entire geometry. By replacing continuity conditions between elements with suitable jump or flux conditions, one obtains the discontinuous Galerkin (DG) method~\cite{Reed_73_01}, in which the continuous solution is approximated by a piecewise continuous function with (possible) discontinuities between elements.
+
+DG methods have gained broad popularity in recent years. Similar in spirit to finite volume methods that track fluxes on a grid, DG methods can be constructed to conserve mass at the discrete level~\cite{Hesthaven_08_01}. They are well-suited to $hp$-adaptivity, provide high-order accuracy, and can be applied to a wide range of problems on complex geometries with unstructured meshes. Although DG methods were first applied to the discretization of hyperbolic conservation laws, they have been extended to handle elliptic problems and diffusive operators~\cite{Arnold_02_01}. Such methods include the symmetric interior penalty (SIP) method~\cite{Douglas_76_01, Arnold_82_01}, the Bassi--Rebay (BR1, BR2) methods~\cite{Bassi_97_01, Bassi_97_02}, the local discontinuous Galerkin (LDG) method~\cite{Cockburn_98_01}, the compact discontinuous Galerkin (CDG) method~\cite{Peraire_08_01}, the line-based discontinuous Galerkin method~\cite{Persson_13_01}, and the hybridizable discontinuous Galerkin (HDG) method~\cite{Cockburn_09_01}. In particular, the development of efficient solvers for DG discretizations of elliptic problems is an active area of research. The multigrid method has emerged as a natural candidate due to its success in the continuous finite element and finite difference communities, both as a standalone solver and as a preconditioner for the conjugate gradient (PCG) method. However, the direct application of black-box multigrid techniques to DG discretizations can result in suboptimal performance~\cite{Antonietti_15_01, Gopalakrishnan_03_01}.
+
+%Among the panoply of DG methods for elliptic problems, the LDG method is a popular choice: it is accurate, stable, simple to implement, and extendable to higher-order derivatives~\cite{Yan_02_01}. Additionally, on Cartesian grids it has been shown to be superconvergent~\cite{Cockburn_01_01}. The LDG method results in symmetric positive (semi)definite discretizations which are well-suited to solution by efficient iterative methods. In particular, the multigrid method has emerged as a natural candidate due to its success in the continuous finite element and finite difference communities, both as a standalone solver and as a preconditioner for the conjugate gradient (PCG) method. However, direct application of standard multigrid techniques to DG discretizations of elliptic problems can result in suboptimal performance when inherited bilinear forms are employed~\cite{Antonietti_15_01, Gopalakrishnan_03_01}, and much work has gone into developing specialized smoothers and coarse-correction methods to remedy this issue, even on Cartesian grids~\cite{Kanschat_03_01, Fabien_19_01}.
+
+In \cref{sec:multigrid-ldg}, we present an efficient $hp$-multigrid scheme for a DG discretization of elliptic problems, formulated around the idea of separately coarsening the underlying discrete gradient and divergence operators. We show that traditional multigrid coarsening of the primal DG formulation leads to poor and suboptimal multigrid performance, whereas coarsening of the flux DG formulation leads to essentially optimal convergence and is equivalent to a purely geometric multigrid method. The resulting operator-coarsening schemes do not require the entire mesh hierarchy
+to be explicitly built, thereby obviating the need to compute quadrature rules, lifting operators,
+and other mesh-related quantities on coarse meshes. 
+
+%\section{Fast solvers}
+
+%\subsection{Direct solvers}
+
+%\subsection{Multigrid methods}
+
+% Outline:
+% Computation is important in science today.
+% Importance of fast methods. Moore's law -> bigger computers/parallelism, or smarter algorithms.
+
+%Physical simulation is an important part of modern science. In addition to theory and experiment, it has emerged as a third pillar for scientific inquiry. The ability to run experiments, test hypotheses, and validate data on a computer has quickened the pace of discovery and prototyping in academia and industry over the last half-century, and today computation plays a fundamental role in nearly all areas of science and engineering.
+
+%Underpinning much of the computation revolution is mathematics and the application of mathematical ideas to the development of numerical algorithms. In tandem with the decades-long advancement in computing power due to Moore's law~\cite{Moore}, strides in numerical analysis have enabled computational science to flourish. In its 2018 report on the state of computational science and engineering (CSE), the Society for Industrial and Applied Mathematics (SIAM) Activity Group on CSE states:
+
+%\begin{quote}
+%Less appreciated but crucial for the success of CSE is the progress in algorithms in this time span. The advances in computing power have been matched or even exceeded by equivalent advances of the mathematics-based computational algorithms that lie at the heart of CSE. Indeed, the development of efficient new algorithms has been crucial to the effective use of advanced computing capabilities. And as the pace of advancement in Moore's law slows, advances in algorithms and software will become even more important.~\cite{CSE_Outlook_SIAM}
+%\end{quote}
+
+%This thesis develops efficient numerical algorithms to accelerate the process of computational science. Specifically, it aims to contribute possible answers to the following questions in the numerical solution of partial differential equations (PDEs):
+%\begin{itemize}
+%\item How can we perform simulations to a high degree of accuracy in a reasonable amount of time?
+%\item Can we lessen the burden on hardware resources by leveraging the tools of numerical analysis?
+%\end{itemize}
+%The algorithms presented herein are high-order accurate and asymptotically fast methods for the numerical solution of elliptic PDEs---a class of problems that describes aspects of many physical phenomena, including fluid dynamics, solid mechanics, electromagnetism, acoustics, heat conduction, and diffusion. The solution of elliptic PDEs is often a bottleneck in physical simulations, and so advancements in solvers for this class of problems can have a significant impact on overall simulation time and accuracy.
+
+%\section{High-order accurate algorithms}
+
+%Algorithms for the solution of PDEs have been developed based on a broad range of mathematical ideas. In general, a PDE is discretized by approximating functions and differential operators according to some parameter, e.g., a grid spacing or mesh size $h$, a polynomial order $p$, or a quadrature size $N$. Error between the computed solution and true solution, $\epsilon$, is decreased by changing this parameter, e.g., by using a finer grid ($h \to 0$), a higher degree polynomial ($p \to \infty$), or more quadrature points ($N \to \infty$). The mathematical theory behind a given algorithm can reveal precisely how fast the error decreases as the discretization parameters are changed.
+
+%Classical discretization techniques, such as finite difference methods or finite volume methods, typically control this error to a low order of accuracy. For a $k$th order finite difference scheme, the error $\epsilon$ decreases algebraically as $\mathcal{O}(h^k)$, and common schemes often use $1 \leq k \leq 4$. When $k=2$, for instance, halving the parameter $h$ by using twice as many grid points causes the error to decrease by a factor of four. Obtaining multiple digits of accuracy may require many successive refinements of $h$, each requiring more computation time than the last. While low-order methods have found widespread success in many fields---and indeed are the predominant methods used today---many scientific questions require answers to be computed to an accuracy that would be computationally infeasible to achieve with such methods.
+
+%High-order numerical methods for PDEs, such as $hp$-finite element methods or spectral methods, use ideas from functional analysis and approximation theory to accelerate solution convergence from algebraic to superalgebraic and exponential. Modern finite element methods allow the tuning of a mesh size $h$ and polynomial order $p$ to achieve convergence rates of $\mathcal{O}(h^{p+1})$ or more; when $p$ is doubled, the error drastically decreases by a factor of $h^p$ if the solution is smooth enough. Spectral methods, which typically employ polynomial approximations globally over an entire domain, can achieve similar exponential convergence rates under the right smoothness conditions. While high-order methods have often been criticized for their computational intractability,  recent advances in efficient high-order accurate techniques---most notably, the discontinuous Galerkin method and sparse spectral methods---have renewed interest in these algorithms.
+
+%The era of high-performance computing (HPC) has also brought new attention to high-order algorithms for PDEs. The NASA Computational Fluid Dynamics (CFD) Vision 2030 states: ``Discretization techniques such as higher-order accurate methods offer the potential for better accuracy and scalability, although robustness and cost considerations remain. Investment must focus on removing these barriers in order to unlock the superior asymptotic properties of these methods...''~\cite{NASA_Vision_2030}. Moreover, high-order accurate simulation methods can have a nontrivial impact on computational efficiency: ``Beyond potential advantages in improved accuracy per degree of freedom, higher-order methods may more effectively utilize new HPC hardware through increased levels of computation per degree of freedom''~\cite{NASA_Vision_2030}. Research into high-order accurate algorithms is crucial for computational science to take full advantage of modern computers.
+
+%The finite difference method approximates function values on a grid and represents differentiation as a local action among neighboring gridpoints.
+
+
+%Finite difference methods approximate solution values on a grid and represent differentiation as a local action among neighboring gridpoints. Finite volume methods track conserved quantities as fluxes. Finite element methods 
+
+%Science needs accurate answers. E.g. Airplane.
+
+% NASA
+%\begin{quote}
+%In order to improve simulation capability and to effectively leverage new HPC hardware, foundational mathematical research will be required in highly scalable linear and nonlinear solvers not only for commonly used discretizations but also for alternative discretizations, such as higher-order techniques. Beyond potential advantages in improved accuracy per degree of freedom, higher-order methods may more effectively utilize new HPC hardware through increased levels of computation per degree of freedom.
+%\end{quote}
+%\cite{NASA_Vision_2030}
+
+% NASA
+%\begin{quote}
+%Discretization techniques such as higher-order accurate methods offer the potential for better accuracy and scalability, although robustness and cost considerations remain. Investment must focus on removing these barriers in order to unlock the superior asymptotic properties of these methods...
+%\end{quote}
+
+%\section{Computational complexity}
+
+%However, accuracy comes at a cost. As more degrees of freedom (e.g., corresponding to $h$, $p$, or $N$ above) are used to more accurately solve a PDE, the time to solution increases. The computational complexity of an algorithm describes exactly how this time scales, and can come from a variety of places, e.g., matrix assembly, numerical quadrature, polynomial transforms, linear system solves, or iteration counts. If $N$ degrees of freedom are used to represent the solution to a PDE, the best complexity one can hope for from a solver is $\mathcal{O}(N)$. We call such methods ``optimal'' or ``fast'', and extend this definition to include polylogarithmic factors of the form $\mathcal{O}(N \log^k N)$ with $k$ small.
+
+%The development of fast solvers for elliptic PDEs is a beautiful subfield of numerical analysis and has a rich history, from the fast Fourier transform (FFT) and fast diagonalization techniques (1965\footnote{Interestingly, the fast Fourier transform was developed in the same year that Gordon Moore penned his eponymous law. Both have had a profound impact on computing today.})~\cite{Cooley_65_01}, to cyclic reduction (1970)~\cite{Buzbee_70_01}, to multigrid methods (1977)~\cite{Brandt_77_01}, to hierarchical low-rank approximation and the fast multipole method (1987)~\cite{Greengard_87_01}. The application of fast methods to high-order accurate discretizations of PDEs is an area of active research, and forms the motivation for much of this thesis.
+
+%As higher-order accurate techniques are utilized by more researchers in HPC environments, computational efficiency is critical. The NASA CFD Vision 2030 sees potential windfall in the development of optimal PDE solvers: ``Because solver optimality is an asymptotic property, as larger simulations are attempted, the potential benefits of better solvers grow exponentially, possibly delivering orders of magnitude improvement by the exascale computing timeframe''~\cite{NASA_Vision_2030}. This sentiment is echoed by the applied mathematics community: ``As problems scale in size and memory to address increasing needs for fidelity and resolution in grand-challenge simulations, the computational complexity must scale as close to linearly in the problem size as possible''~\cite{CSE_Outlook_SIAM}. With the end of Moore's law present, speedups in computation time must come from smarter algorithms, either through increased parallelism or decreased computational complexity. Numerical analysis is well poised to tackle the latter.
+
+% SIAM:
+%\begin{quote}
+%As problems scale in size and memory to address increasing needs for fidelity and resolution in grand-challenge simulations, the computational complexity must scale as close to linearly in the problem size as possible.
+%\end{quote}
+%
+%% NASA:
+%\begin{quote}
+%Revolutionary algorithmic improvements will be required to enable future advances in simulation capability.
+%\end{quote}
+
+\section{Scientific software}
+
+% p7. When you talk about the problems of scientific software, you could touch on the reasons why much of it isn't well-maintained. In principle, I think many people would be willing to work hard on software, but the culture and research funding mechanisms disincentivize it. We typically value scientific papers much more than software in academic hiring (although journals like JOSS and SoftwareX are changing that a little bit). There are limited grants that people can apply to for the maintenance of scientific software (although the NSF Software Infrastructure for Sustained Innovation program is one exception). Performing software maintenance might be better done by a full-time programmer as opposed to a grad student or postdoc. When I've spoken to Keaton Burns and the other Dedalus developers, I've been struck how similar their negative experiences have been with my own.
+
+The development of user-friendly scientific software is an important way to facilitate the adoption of new algorithms by computational scientists. Independent of the mathematical algorithms implemented, scientific software libraries that are well maintained, well documented, easy to install, and easy to use are more likely to find success in the scientific community~\cite{LeVeque_13_01}. Software for the solution of elliptic PDEs is no exception, and many open-source scientific software libraries have found widespread success due to their efficient algorithms and user-friendly interfaces for solving elliptic PDEs. Available software libraries for solving elliptic PDEs with high-order methods include:
+
+\begin{itemize}
+\item Chebfun~\cite{Chebfun}:  A MATLAB toolbox for spectral methods. It includes an automated PDE solver for a spectral method on the rectangle, as well as Helmholtz solvers on the disk, sphere, and ball.
+\item Dedalus~\cite{Dedalus}: A Python framework for solving PDEs using spectral methods on semi-periodic domains. It supports MPI-based parallelism, with a focus on computational fluid dynamics applications.
+\item ApproxFun~\cite{ApproxFun}: A Julia package for spectral methods, including a sparse method for solving PDEs on simple domains.
+\item MFEM~\cite{MFEM}: A C++ library that implements a wide variety of high-order FEM discretizations. It supports MPI-based parallelism and can interface with a range of solvers.
+\item Nektar++~\cite{Nektar,Nektar2}: A C++ library for spectral element computation and $hp$-adaptivity using both nodal and modal bases.
+\item Nek5000~\cite{Nek5000}: A Fortran library for computational fluid dynamics using the spectral element method.
+\item deal.II~\cite{deal.II}: A C++ library for general finite element computation with a wide variety of high-order FEM discretizations. It supports MPI-based parallelism and can interface with a range of solvers.
+\item Firedrake~\cite{Firedrake}: A Python library for the automated solution of PDEs using a variety of finite element discretizations.
+\item PETSc~\cite{PETSc_web,PETSc_manual}: A general toolbox that implements a range of scalable solvers, linear algebra routines, preconditioners, and iterative methods.
+\item hypre~\cite{hypre}:  A C library of high-performance preconditioners and solvers for the solution of large, sparse linear systems of equations, with a focus on parallel algebraic multigrid methods.
+\end{itemize}
+%Independent of the mathematical algorithms implemented, scientific software libraries are often poorly documented, hard to install, unmaintained, and esoteric to non-experts---if publicly released to the scientific community at all~\cite{LeVeque_13_01}.
+%Software for the solution of PDEs is no exception, and the release of open-source code to accompany a computational mathematics paper has only recently come into vogue.
+%Because of this, application scientists can be hesitant to adopt new numerical methods over tried-and-true codes. For example, in the computational fluid dynamics community, many of the flow solvers in use today ``were developed more than 20 years ago and are well known to be suboptimal''~\cite{NASA_Vision_2030}.
+%Nonetheless, many open-source scientific software libraries have found widespread success due to their efficient algorithms and user-friendly interfaces, such as LAPACK~\cite{lapack}, FFTW~\cite{FFTW}, PETSc~\cite{PETSc_web,PETSc_manual}, hypre~\cite{hypre}, MFEM~\cite{MFEM}, Firedrake~\cite{Firedrake}, Nektar++~\cite{Nektar,Nektar2}, and Nek5000~\cite{Nek5000}. 
+
+%\vspace{0.3em}
+%\begin{center}$ {\ast}\;{\ast}\;{\ast} $\end{center}
+%\vspace{0.3em}
+
+%To that end,
+In that vein, source code for much of the work presented in this thesis is publicly available on GitHub. Moreover, the algorithms described in \cref{sec:ultraSEM} have been packaged into a software library that aims to be well-documented and easy to use. The following repositories contain code corresponding to each chapter:
+
+\begin{itemize}
+\item \cref{sec:fast-spectral-poisson}: \url{https://github.com/danfortunato/fast-poisson-solvers}
+\item \cref{sec:ultraSEM}: \url{https://github.com/danfortunato/ultraSEM}
+\item \cref{sec:multigrid-ldg}: \url{https://github.com/danfortunato/multigrid-ldg}
+\end{itemize}

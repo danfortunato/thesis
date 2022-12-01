@@ -1,0 +1,59 @@
+\begingroup
+
+%% TOC
+%\hypersetup{
+%%  hypertexnames=false,
+%%  breaklinks,
+%  colorlinks=false,
+%%  linkcolor=exlinkcolor,
+%%  urlcolor=exlinkcolor,
+%%  citecolor=exlinkcolor,
+%%  linktocpage = false
+%  linktoc=all
+%}
+
+%\newcounter{dummy}
+%\refstepcounter{dummy}
+\phantomsection
+\addcontentsline{toc}{chapter}{Contents}
+%\setcounter{tocdepth}{2} % <-- 2 includes up to subsections in the ToC
+%\setcounter{secnumdepth}{3} % <-- 3 numbers up to subsubsections
+\manualmark
+\markboth{\itshape Contents}{\itshape Contents}
+\tableofcontents
+%\automark[section]{chapter}
+%\renewcommand{\chaptermark}[1]{\markboth{\spacedlowsmallcaps{#1}}{\spacedlowsmallcaps{#1}}}
+%\renewcommand{\sectionmark}[1]{\markright{\thesection\enspace\spacedlowsmallcaps{#1}}}
+\clearpage
+\cleardoublepage
+
+% list of figures and tables
+%\begingroup
+%    \let\clearpage\relax
+%    \let\cleardoublepage\relax
+%    \let\cleardoublepage\relax
+%    \refstepcounter{dummy}
+%    \pdfbookmark[1]{\listfigurename}{lof}
+%    \listoffigures
+%
+%    \vspace*{8ex}
+%
+%    \refstepcounter{dummy}
+%    \pdfbookmark[1]{\listtablename}{lot}
+%    \listoftables
+%\endgroup
+
+%\cleardoublepage
+
+%\hypersetup{
+%  colorlinks=true,
+%  hypertexnames=false,
+%  breaklinks,
+%  linkcolor=exlinkcolor,
+%  urlcolor=exlinkcolor,
+%  citecolor=exlinkcolor,
+%%  linktocpage = false
+%  linktoc=all
+%}
+
+\endgroup
